@@ -128,7 +128,7 @@ class Auth extends CI_Controller {
          $this->session->unset_userdata("email"); //Untuk menghilangkan email
          $this->session->unset_userdata("role_id"); //Untuk menghilangkan role_id
 
-        $this->session->set_flashdata("messege", '<div class="alert alert-success" role="alert">You have been logout!</div>');
+        $this->session->set_flashdata("messege", '<div class="alert alert-success" role="alert">You have been logged out!</div>');
 
         //Jika data berhasil di Insert. Kembalikan ke halaman Login
         redirect("auth");
