@@ -44,7 +44,12 @@ class Auth extends CI_Controller {
             if( $user["is_active"] == 1 ){
                 //Cek password
                 if( password_verify($password, $user["password"])){
-
+                    $data = [
+                        "email" => $user["email"],
+                        "role_id" => $user["role_id"]
+                    ];
+                    $this->session->set_userdata($data);
+                    redirect("user");
                 } else {
                     //Jika user password salah
                     $this->session->set_flashdata("messege", '<div class="alert alert-danger" role="alert">Wrong password!</div');
@@ -114,6 +119,20 @@ class Auth extends CI_Controller {
             redirect("auth");
 
         }
+
+    }
+
+    public function logout()
+    {
+         //Bersihkan session kemudian kembalikan ke halaman login
+         $this->session->unset_userdata("email"); //Untuk menghilangkan email
+         $this->session->unset_userdata("role_id"); //Untuk menghilangkan role_id
+
+        $this->session->set_flashdata("messege", '<div class="alert alert-success" role="alert">You have been logout!</div>');
+
+        //Jika data berhasil di Insert. Kembalikan ke halaman Login
+        redirect("auth");
+
 
     }
 
