@@ -46,9 +46,14 @@
                 $subMenu = $this->db->query($querySubMenu)->result_array();
              ?>
 
+                <!-- Looping sub menu -->
                 <?php foreach($subMenu as $sm):?>
+                <?php if($title == $sm["title"]):?>
                 <!-- Nav Item - Dashboard -->
-                <li class="nav-item">
+                <li class="nav-item active">
+                    <?php else : ?>
+                 <li class="nav-item"></li>
+                    <?php endif?>
                     <a class="nav-link" href="<?= base_url($sm["url"]); ?>">
                         <i class="<?= $sm["icon"]; ?>"></i>
                         <span><?= $sm["title"]; ?></span></a>
