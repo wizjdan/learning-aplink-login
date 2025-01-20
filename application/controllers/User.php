@@ -7,9 +7,10 @@ class User extends CI_Controller
     {
         parent::__construct();
         //Pengecekan Email
-        if ( !$this->session->userdata("email")){ //Jika tidak ada session
-            redirect("auth");
-        }
+        // if ( !$this->session->userdata("email")){ //Jika tidak ada session
+        //     redirect("auth");
+        // }
+        is_logged_in();
     }
 
     public function index()
