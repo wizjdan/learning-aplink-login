@@ -109,29 +109,118 @@ class Auth extends CI_Controller {
             $this->load->view("templates/auth_footer");
 
         } else {
+
+            $email = $this->input->post("email", true);
         
             $data = [
                 "name" => htmlspecialchars($this->input->post("name", true)),
-                "email" => htmlspecialchars($this->input->post("email", true)),
+                "email" => htmlspecialchars($email),
                 "image" => "default.jpg",
                 //Password tidak perlu htmlspecialchars, karena kemungkinan akan ada characters special di dalamnya
                 "password" => password_hash($this->input->post("password1"), PASSWORD_DEFAULT),
                 "role_id" => 2,
-                "is_active" => 1,
+                "is_active" => 0,
+                "date_created" => time()
+            ];
+
+            //Token
+            $token = base64_encode(random_bytes(32));
+            $user_token = [
+                "email" => $email,
+                "token" => $token,
                 "date_created" => time()
             ];
 
             //Insert ke dalam database
             $this->db->insert("user", $data);
 
+            //Insert ke dalam database di tabel token
+            $this->db->insert("user_token", $user_token);
+
+            //Kirim email untuk user activation
+            $this->_sendEmail($token, "verify");
+
             //Pesan jika berhasil
-            $this->session->set_flashdata("messege", '<div class="alert alert-success" role="alert">Congratulation! your account has been creatd. Please Login</div>');
+            $this->session->set_flashdata("messege", '<div class="alert alert-success" role="alert">Congratulation! your account has been creatd. Please activate your account</div>');
 
             //Jika data berhasil di Insert. Kembalikan ke halaman Login
             redirect("auth");
-
         }
+    }
 
+    private function _sendEmail($token, $type)
+    {
+        // $config['protocol'] = 'sendmail';
+        // $config['mailpath'] = '/usr/sbin/sendmail';
+        // $config['charset'] = 'iso-8859-1';
+        // $config['wordwrap'] = TRUE;
+
+        // $this->email->initialize($config);
+
+        $config = [
+            "protocol" => "smtp",
+            "smtp_host" => "ssl://smtp.googlemail.com",
+            "smmtp_user" => "", //Email Pengirim
+            "smtp_pass" => "",  //Password email pengirim
+            "smtp_post" => 465,
+            "mailtype" => "html",
+            "charset" => "utf-8",
+            "newline" => "\r\n"
+        ];
+
+        $this->load->library("email", $config);
+
+        //Parameter 1 : Email pengirim
+        //Parameter 2 : Nama pengirim
+        $this->email->from("ppngra1@gmail.com", "ajgblasbla");
+        $this->email->to($this->input->post("email"));
+
+        if($type == "verify") {
+            $this->email->subject("Account Verification");
+            $this->email->messege('Click this link to verify your account : <a href="'. base_url() . 'auth/verify?email' . $this->input->post("email") . '&token=' . urlencode($token) .  '">Activate</a>');
+        } 
+
+    }
+
+    public function verify()
+    {
+        $email = $this->input->get("email");
+        $token = $this->input->get("token");
+
+        $user = $this->db->get_where("user", ["email" => $email])->row_array();
+
+        if($user){
+            $user_token = $this->db->get_where("user_token", ["token" => $token])->row_array();
+
+            if($user_token) {
+                //Waktu untuk validasi token
+                if(time() - $user_token["date_created"] < (60*60*24)) {
+
+                    $this->db->set("is_active", 1);
+                    $this->db->where("email", $email);
+                    $this->db->update("user");
+
+                    $this->db->delet("user_token", ["email" => $email]);
+                    $this->session->set_flashdata("messege", '<div class="alert alert-success" role="alert">'. $email .' has been activated! Please Login!</div>');
+                    redirect("auth");
+
+                } else {
+
+                    $this->db->delete("user", ["email" => $email]);
+                    $this->db->delete("user_token", ["email" => $email]);
+
+                    $this->session->set_flashdata("messege", '<div class="alert alert-danger" role="alert">Account activation failed ! Token expired!</div>');
+                    redirect("auth");
+                }
+            } else {
+                $this->session->set_flashdata("messege", '<div class="alert alert-danger" role="alert">Account activation failed ! Wrong token</div>');
+                redirect("auth");
+            }
+
+        } else {
+            $this->session->set_flashdata("messege", '<div class="alert alert-danger" role="alert">Account activation failed ! Wrong Email</div>');
+            redirect("auth");
+        }
     }
 
     public function logout()
