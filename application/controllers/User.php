@@ -30,7 +30,7 @@ class User extends CI_Controller
         $data["title"] = "Edit Profile";
         $data["user"] = $this->db->get_where("user", ["email" => $this->session->userdata("email")])->row_array();
 
-        $this->form_validation->set_rules("name", "Full Name", "required|trim")
+        $this->form_validation->set_rules("name", "Full Name", "required|trim");
 
         if($this->form_validation->run() == false ){
             $this->load->view("templates/header", $data);
@@ -79,6 +79,18 @@ class User extends CI_Controller
             redirect("user");
         }
         
+    }
+
+    public function changePassword()
+    {
+        $data["title"] = "Change Password";
+        $data["user"] = $this->db->get_where("user", ["email" => $this->session->userdata("email")])->row_array();
+        
+        $this->load->view("templates/header", $data);
+        $this->load->view("templates/sidebar", $data);
+        $this->load->view("templates/topbar", $data);
+        $this->load->view("user/changepassword", $data);
+        $this->load->view("templates/footer");
     }
 
 }
